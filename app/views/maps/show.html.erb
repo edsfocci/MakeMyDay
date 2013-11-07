@@ -144,6 +144,13 @@
 <body>
   <div id="dialog" data-id=''>
     <script>
+      function offer(){
+        var offer = prompt('Make an offer!');
+        if(offer) {
+          send_message();
+        }
+      };
+
       function send_message(){
         $.ajax({
           url: '<%= listings_url %>',
@@ -180,7 +187,7 @@
       }
     </script>
 
-    <input type="button" value="I want to buy!" onClick="send_message()">
+    <input type="button" value="I want to buy!" onClick="offer()">
     <span id='interest_count'></span> <span id='humans'></span> interested
     <img src=''>
   </div>
