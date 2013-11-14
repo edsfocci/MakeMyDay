@@ -17,30 +17,32 @@
         width: 670,
         modal: true
       });
-        $( "#opener" ).click(function() {
+      $( "#opener" ).click(function() {
         $( "#dialog" ).dialog( "open" );
-        });
+      });
 
       $.ajax({
-        url: 'https://rets.io/api/v1/listing/crmls.json',
+        url: '<%= listings_url %>',
+        // url: 'https://rets.io/api/v1/listing/crmls.json',
         type: 'GET',
-        data: 'access_token=Zubx2TNTaF7yLQKOrB3JJamGW4SraeP3&limit=100', //&limit=100, // or $('#myform').serializeArray()
+        // data: 'access_token=Zubx2TNTaF7yLQKOrB3JJamGW4SraeP3&limit=100', //&limit=100, // or $('#myform').serializeArray()
         success: function(res) {
           var mapOptions = {
             center: new google.maps.LatLng(-34.397, 150.644),
-            zoom: 8,
+            zoom: 12,
             mapTypeId: google.maps.MapTypeId.ROADMAP
           };
           var map = new google.maps.Map(document.getElementById("map-canvas"),
               mapOptions);
 
-          $.ajax({
-            url: '<%= listings_url %>',
-            type: 'GET',
-            success: function(res) {
-              interest_counts = res;
-            }
-          });
+          interest_counts = res;
+          // $.ajax({
+          //   url: '<%= listings_url %>',
+          //   type: 'GET',
+          //   success: function(res) {
+          //     interest_counts = res;
+          //   }
+          // });
 
           var markers = [];
           var lat;
@@ -50,21 +52,22 @@
           var max_lat;
           var min_lng;
           var max_lng;
-          for(var i = 0; i < res.bundle.length; i++) {
-            if(!res.bundle[i]['Coordinates']) {
-              continue;
-            }
-            else if(res.bundle[i]['Coordinates']['Latitude'] > 36) {
-              continue;
-            }
 
-            lat = res.bundle[i]['Coordinates']['Latitude'];
-            lng = res.bundle[i]['Coordinates']['Longitude'];
+          res.forEach(function (listing) {
+          // for(var i = 0; i < res.bundle.length; i++) {
+            // if(!res.bundle[i]['Coordinates']) {
+            //   continue;
+            // }
+
+            lat = listing.lat;
+            lng = listing.lng;
+            // lat = res.bundle[i]['Coordinates']['Latitude'];
+            // lng = res.bundle[i]['Coordinates']['Longitude'];
 
             if(!min_lat) {
-              min_lat = res.bundle[i]['Coordinates']['Latitude'];
+              min_lat = lat;
               max_lat = min_lat;
-              min_lng = res.bundle[i]['Coordinates']['Longitude'];
+              min_lng = lng;
               max_lng = min_lng;
             }
 
@@ -85,50 +88,58 @@
             marker = new google.maps.Marker({
               position: new google.maps.LatLng(lat, lng),
               map: map,
-              title: res.bundle[i]['Address']
+              title: listing.address
+              // title: res.bundle[i]['Address']
             });
 
             google.maps.event.addListener(marker, 'click', function(event) {
-              var select_listing = res.bundle.filter(function (mark) {
-                if(mark['Coordinates']) {
-                  return mark['Coordinates']['Latitude'] === event.latLng.lat();
-                }
+              var select_listing = res.filter(function (mark) {
+              // var select_listing = res.bundle.filter(function (mark) {
+                // if(mark['Coordinates']) {
+                return mark.lat === event.latLng.lat();
+                // return mark['Coordinates']['Latitude'] === event.latLng.lat();
+                // }
               })[0];
 
               var interest_count = interest_counts.filter(function (count) {
-                return count['listing_api_id'] === select_listing['_id']
+                return count['id'] === select_listing['id']
+                // return count['listing_api_id'] === select_listing['_id']
               })[0];
 
-              if(interest_count) {
-                $('#interest_count').html(interest_count['interest_count']);
-                if(interest_count['interest_count'] === 1) {
-                  $('#humans').html('person');
-                }
-                else {
-                  $('#humans').html('people');
-                }
+              // if(interest_count) {
+              $('#interest_count').html(interest_count['interest_count']);
+              if(interest_count['interest_count'] === 1) {
+                $('#humans').html('person');
               }
               else {
-                $('#interest_count').html('0');
                 $('#humans').html('people');
               }
+              // }
+              // else {
+              //   $('#interest_count').html('0');
+              //   $('#humans').html('people');
+              // }
 
-              $('#dialog').dialog('option', 'data-id', select_listing['_id']);
-              $('#dialog').dialog('option', 'title', select_listing['Address']);
+              $('#dialog').dialog('option', 'data-id', select_listing['id']);
+              $('#dialog').dialog('option', 'title', select_listing['address']);
+              // $('#dialog').dialog('option', 'data-id', select_listing['_id']);
+              // $('#dialog').dialog('option', 'title', select_listing['Address']);
 
-              if(select_listing['PhotoCount']) {
-                $('#dialog').find('img').attr('src',
-                                      select_listing['Photos'][0]['Location']);
-              }
-              else {
-                $('#dialog').find('img').attr('src', '');
-              }
+              // if(select_listing['PhotoCount']) {
+              $('#dialog').find('img').attr('src',
+                                                      select_listing.photo_url);
+                                    // select_listing['Photos'][0]['Location']);
+              // }
+              // else {
+              //   $('#dialog').find('img').attr('src', '');
+              // }
               
               $( "#dialog" ).dialog( "open" );
             });
 
             markers << marker;
-          }
+          });
+          // }
 
           var center_lat = (max_lat + min_lat) / 2.0;
           var center_lng = (max_lng + min_lng) / 2.0;
@@ -160,18 +171,20 @@
             var replace_index;
 
             var interest_count = interest_counts.filter(function (count, i) {
-              if(count['listing_api_id'] === res['listing_api_id']) {
+              if(count['id'] === res['id']) {
+              // if(count['listing_api_id'] === res['listing_api_id']) {
                 replace_index = i;
               }
-              return count['listing_api_id'] === res['listing_api_id']
+              return count['id'] === res['id']
+              // return count['listing_api_id'] === res['listing_api_id']
             });
 
-            if(interest_count) {
-              interest_counts.splice(replace_index, 1, res)
-            }
-            else {
-              interest_counts << res;
-            }
+            // if(interest_count) {
+            interest_counts.splice(replace_index, 1, res)
+            // }
+            // else {
+            //   interest_counts << res;
+            // }
 
             $('#interest_count').html(res['interest_count']);
             if(res['interest_count'] === 1) {

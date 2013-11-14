@@ -14,13 +14,14 @@
 ActiveRecord::Schema.define(:version => 20131107095935) do
 
   create_table "listings", :force => true do |t|
-    t.string   "listing_api_id"
+    t.string   "address"
+    t.string   "photo_url"
+    t.float    "lat"
+    t.float    "lng"
     t.integer  "interest_count"
     t.datetime "created_at",     :null => false
     t.datetime "updated_at",     :null => false
   end
-
-  add_index "listings", ["listing_api_id"], :name => "index_listings_on_listing_api_id", :unique => true
 
   create_table "users", :force => true do |t|
     t.string   "email",                  :default => "", :null => false

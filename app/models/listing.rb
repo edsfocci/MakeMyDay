@@ -1,3 +1,3 @@
 class Listing < ActiveRecord::Base
-  attr_accessible :listing_api_id, :interest_count
+  attr_accessible :address, :photo_url, :lat, :lng, :interest_count
 end
